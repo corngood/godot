@@ -909,9 +909,9 @@ void CanvasItemEditor::_viewport_input_event(const InputEvent& p_event) {
 
 				if (b.doubleclick) {
 
-					if (canvas_item->get_filename()!="" && canvas_item!=editor->get_edited_scene()) {
+					if (canvas_item->is_instance()) {
 
-						editor->open_request(canvas_item->get_filename());
+						editor->open_request(canvas_item->get_instance_path());
 						return;
 					}
 				}

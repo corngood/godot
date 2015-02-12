@@ -181,7 +181,7 @@ Node *PackedScene::instance(bool p_gen_edit_state) const {
 	Node *s = ret_nodes[0];
 
 	if (get_path()!="" && get_path().find("::")==-1)
-		s->set_filename(get_path());
+		s->set_instance_path(get_path());
 	return ret_nodes[0];
 
 }
@@ -223,9 +223,9 @@ Error PackedScene::_parse_node(Node *p_owner,Node *p_node,int p_parent_idx, Map<
 	Set<StringName> instance_groups;
 
 
-	if (p_node!=p_owner && p_node->get_filename()!="") {
+	if (p_node!=p_owner && p_node->is_instance()) {
 		//instanced
-		Ref<PackedScene> instance = ResourceLoader::load(p_node->get_filename());
+		Ref<PackedScene> instance = ResourceLoader::load(p_node->get_instance_path());
 		if (!instance.is_valid()) {
 			return ERR_CANT_OPEN;
 		}

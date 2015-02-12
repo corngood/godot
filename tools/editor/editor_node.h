@@ -449,6 +449,7 @@ public:
 	void animation_panel_make_visible(bool p_visible);
 
 	Node *get_edited_scene() { return edited_scene; }
+    const String& get_current_path() { return current_path; }
 
 	Viewport *get_scene_root() { return scene_root; } //root of the scene being edited
 	Error save_optimized_copy(const String& p_scene,const String& p_preset);

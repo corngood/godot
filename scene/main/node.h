@@ -68,7 +68,7 @@ private:
 		
 	struct Data {
 	
-		String filename;
+		String instance_path;
 		Dictionary instance_state;
 		Vector<StringName> instance_groups;
 		Vector<Connection> instance_connections;
@@ -223,8 +223,9 @@ public:
 	
 	void print_tree();
 	
-	void set_filename(const String& p_filename);
-	String get_filename() const;
+	void set_instance_path(const String& p_instance_path);
+	String get_instance_path() const;
+    bool is_instance() const;
 	
 	/* NOTIFICATIONS */
 	

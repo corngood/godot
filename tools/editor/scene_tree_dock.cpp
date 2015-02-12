@@ -55,15 +55,8 @@ void SceneTreeDock::_unhandled_key_input(InputEvent p_event) {
 Node* SceneTreeDock::instance(const String& p_file) {
 
 	Node *parent = scene_tree->get_selected();
-	if (!parent || !edited_scene) {
 
-		current_option=-1;
-		//accept->get_cancel()->hide();
-		accept->get_ok()->set_text("Ok :( ");
-		accept->set_text("No parent to instance a child at.");
-		accept->popup_centered(Size2(300,70));
-		return NULL;
-	};
+    parent = edited_scene ? scene_tree->get_selected() : scene_root;
 
 	ERR_FAIL_COND_V(!parent,NULL);
 
@@ -84,15 +77,21 @@ Node* SceneTreeDock::instance(const String& p_file) {
 	}
 
 	instanced_scene->generate_instance_state();
-	instanced_scene->set_filename( Globals::get_singleton()->localize_path(p_file) );
+	instanced_scene->set_instance_path( Globals::get_singleton()->localize_path(p_file) );
 
 	editor_data->get_undo_redo().create_action("Instance Scene");
-	editor_data->get_undo_redo().add_do_method(parent,"add_child",instanced_scene);
-	editor_data->get_undo_redo().add_do_method(instanced_scene,"set_owner",edited_scene);
-	editor_data->get_undo_redo().add_do_method(editor_selection,"clear");
-	editor_data->get_undo_redo().add_do_method(editor_selection,"add_node",instanced_scene);
-	editor_data->get_undo_redo().add_do_reference(instanced_scene);
-	editor_data->get_undo_redo().add_undo_method(parent,"remove_child",instanced_scene);
+    if (edited_scene) {
+        editor_data->get_undo_redo().add_do_method(parent,"add_child",instanced_scene);
+        editor_data->get_undo_redo().add_do_method(instanced_scene,"set_owner",edited_scene);
+        editor_data->get_undo_redo().add_do_method(editor_selection,"clear");
+        editor_data->get_undo_redo().add_do_method(editor_selection,"add_node",instanced_scene);
+        editor_data->get_undo_redo().add_do_reference(instanced_scene);
+        editor_data->get_undo_redo().add_undo_method(parent,"remove_child",instanced_scene);
+    } else {
+        editor_data->get_undo_redo().add_do_method(editor,"set_edited_scene",instanced_scene);
+        editor_data->get_undo_redo().add_do_reference(instanced_scene);
+        editor_data->get_undo_redo().add_undo_method(editor,"set_edited_scene",(Object*)NULL);
+    }
 	editor_data->get_undo_redo().commit_action();
 
 
@@ -192,7 +191,8 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 			if (existing.is_valid())
 				editor->push_item(existing.ptr());
 			else {
-				String path = selected->get_filename();
+                // TODO: maybe do something like signal handler names?
+				String path = "";//selected->get_filename();
 				script_create_dialog->config(selected->get_type(),path);
 				script_create_dialog->popup_centered(Size2(300,290));
 				//script_create_dialog->popup_centered_minsize();
@@ -506,9 +506,9 @@ Node *SceneTreeDock::_duplicate(Node *p_node, Map<Node*,Node*> &duplimap) {
 
 	Node *node=NULL;
 
-	if (p_node->get_filename()!="") { //an instance
+	if (p_node->is_instance()) { //an instance
 
-		Ref<PackedScene> sd = ResourceLoader::load( p_node->get_filename() );
+		Ref<PackedScene> sd = ResourceLoader::load( p_node->get_instance_path() );
 		ERR_FAIL_COND_V(!sd.is_valid(),NULL);
 		node = sd->instance();
 		ERR_FAIL_COND_V(!node,NULL);

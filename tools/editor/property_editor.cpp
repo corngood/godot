@@ -1655,7 +1655,7 @@ Node *PropertyEditor::get_instanced_node() {
 	if (!node)
 		return NULL;
 
-	if (node->get_filename()=="")
+	if (!node->is_instance())
 		return NULL;
 
 	if (!node->get_owner())

@@ -1224,13 +1224,16 @@ void Node::remove_and_skip() {
 	data.parent->remove_child(this);
 }
 
-void Node::set_filename(const String& p_filename) {
+void Node::set_instance_path(const String& p_instance_path) {
 	
-	data.filename=p_filename;
+	data.instance_path=p_instance_path;
 }
-String Node::get_filename() const {
+String Node::get_instance_path() const {
 	
-	return data.filename;
+	return data.instance_path;
+}
+bool Node::is_instance() const {
+    return get_instance_path() != String();
 }
 
 
@@ -1314,8 +1317,8 @@ Node *Node::duplicate() const {
 
 
 
-	if (get_filename()!="") { //an instance
-		node->set_filename(get_filename());
+	if (is_instance()) { //an instance
+		node->set_instance_path(get_instance_path());
 	}
 
 	List<PropertyInfo> plist;
@@ -1358,9 +1361,9 @@ void Node::_duplicate_and_reown(Node* p_new_parent, const Map<Node*,Node*>& p_re
 
 	Node *node=NULL;
 
-	if (get_filename()!="") {
+	if (is_instance()) {
 
-		Ref<PackedScene> res = ResourceLoader::load(get_filename());
+		Ref<PackedScene> res = ResourceLoader::load(get_instance_path());
 		ERR_FAIL_COND(res.is_null());
 		node=res->instance();
 		ERR_FAIL_COND(!node);
@@ -1419,7 +1422,7 @@ void Node::_duplicate_and_reown(Node* p_new_parent, const Map<Node*,Node*>& p_re
 Node *Node::duplicate_and_reown(const Map<Node*,Node*>& p_reown_map) const {
 
 
-	ERR_FAIL_COND_V(get_filename()!="",NULL);
+	ERR_FAIL_COND_V(is_instance(),NULL);
 
 	Node *node=NULL;
 
@@ -1531,7 +1534,7 @@ void Node::replace_by(Node* p_node,bool p_keep_data) {
 	for(int i=0;i<owned_by_owner.size();i++)
 		owned_by_owner[i]->set_owner(owner);
 
-	p_node->set_filename(get_filename());
+	p_node->set_instance_path(get_instance_path());
 
 	for (List<_NodeReplaceByPair>::Element *E=replace_data.front();E;E=E->next()) {
 
@@ -1789,8 +1792,9 @@ void Node::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("remove_and_skip"),&Node::remove_and_skip);
 	ObjectTypeDB::bind_method(_MD("get_index"),&Node::get_index);
 	ObjectTypeDB::bind_method(_MD("print_tree"),&Node::print_tree);
-	ObjectTypeDB::bind_method(_MD("set_filename","filename"),&Node::set_filename);
-	ObjectTypeDB::bind_method(_MD("get_filename"),&Node::get_filename);
+	ObjectTypeDB::bind_method(_MD("set_instance_path","instance_path"),&Node::set_instance_path);
+	ObjectTypeDB::bind_method(_MD("get_instance_path"),&Node::get_instance_path);
+	ObjectTypeDB::bind_method(_MD("is_instance"),&Node::is_instance);
 	ObjectTypeDB::bind_method(_MD("propagate_notification","what"),&Node::propagate_notification);
 	ObjectTypeDB::bind_method(_MD("set_fixed_process","enable"),&Node::set_fixed_process);
 	ObjectTypeDB::bind_method(_MD("get_fixed_process_delta_time"),&Node::get_fixed_process_delta_time);

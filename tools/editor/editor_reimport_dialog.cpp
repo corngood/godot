@@ -67,7 +67,7 @@ void EditorReImportDialog::popup_reimport() {
 
 
 	if (scene_must_save) {
-		if (EditorNode::get_singleton()->get_edited_scene() && EditorNode::get_singleton()->get_edited_scene()->get_filename()=="") {
+		if (EditorNode::get_singleton()->get_edited_scene() && EditorNode::get_singleton()->get_current_path()=="") {
 
 			error->set_text("Current scene must be saved to re-import.");
 			error->popup_centered(Size2(250,100));
@@ -102,7 +102,7 @@ void EditorReImportDialog::ok_pressed() {
 	EditorProgress ep("reimport","Re-Importing",items.size());
 	String reload_fname;
 	if (scene_must_save && EditorNode::get_singleton()->get_edited_scene()) {
-		reload_fname = EditorNode::get_singleton()->get_edited_scene()->get_filename();
+		reload_fname = EditorNode::get_singleton()->get_current_path();
 		EditorNode::get_singleton()->save_scene(reload_fname);
 		EditorNode::get_singleton()->clear_scene();
 	}

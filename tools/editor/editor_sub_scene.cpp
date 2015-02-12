@@ -127,7 +127,7 @@ void EditorSubScene::_reown(Node* p_node,List<Node*> *p_to_reown) {
 
 	if (p_node==scene) {
 
-		scene->set_filename("");
+		scene->set_instance_path("");
 		p_to_reown->push_back(p_node);
 	} else if (p_node->get_owner()==scene){
 

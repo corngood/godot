@@ -105,7 +105,7 @@ void EditorNode::_update_title() {
 
 	String appname = Globals::get_singleton()->get("application/name");
 	String title = appname.empty()?String(VERSION_FULL_NAME):String(_MKSTR(VERSION_NAME) + String(" - ") + appname);
-	String edited = edited_scene?edited_scene->get_filename():String();
+	String edited = current_path;
 	if (!edited.empty())
 		title+=" - " + String(edited.get_file());
 	if (unsaved_cache)
@@ -726,7 +726,7 @@ void EditorNode::_save_scene(String p_file) {
 	_save_edited_subresources(scene,processed,flg);
 	editor_data.save_editor_external_data();
 	if (err==OK) {
-		scene->set_filename( Globals::get_singleton()->localize_path(p_file) );
+        current_path = Globals::get_singleton()->localize_path(p_file);
 		//EditorFileSystem::get_singleton()->update_file(p_file,sdata->get_type());
 		saved_version=editor_data.get_undo_redo().get_version();
 		_update_title();
@@ -1185,14 +1185,8 @@ void EditorNode::_imported(Node *p_node) {
 	Node *scene = edited_scene;
 	set_edited_scene(p_node);
 
-	if (scene) {
-		String path = scene->get_filename();
-		p_node->set_filename(path);
+	if (scene)
 		memdelete(scene);
-	}
-
-
-
 }
 
 
@@ -1384,7 +1378,7 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 
 
 
-	if (p_current || (edited_scene && p_custom==edited_scene->get_filename())) {
+	if (p_current || (edited_scene && p_custom==current_path)) {
 
 
 		Node *scene = edited_scene;
@@ -1399,7 +1393,7 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 			return;
 		}
 
-		if (scene->get_filename()=="") {
+		if (current_path=="") {
 			current_option=-1;
 			//accept->get_cancel()->hide();
 			/**/
@@ -1417,10 +1411,10 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 
 		if (run_settings_dialog->get_run_mode()==RunSettingsDialog::RUN_LOCAL_SCENE) {
 
-			run_filename=scene->get_filename();
+			run_filename=current_path;
 		} else {
 			args=run_settings_dialog->get_custom_arguments();
-			current_filename=scene->get_filename();
+			current_filename=current_path;
 		}
 
 	} else if (p_custom!="") {
@@ -1453,7 +1447,7 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 
 			if (scene) { //only autosave if there is a scene obviously
 
-				if (scene->get_filename()=="") {
+				if (current_path=="") {
 
 					current_option=-1;
 					//accept->get_cancel()->hide();
@@ -1463,7 +1457,7 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 					return;
 				}
 
-				_save_scene(scene->get_filename());
+				_save_scene(current_path);
 			}
 		}
 
@@ -1511,9 +1505,10 @@ void EditorNode::_cleanup_scene() {
 	resources_dock->cleanup();
 	scene_import_metadata.unref();
 	set_edited_scene(NULL);
+    current_path = String();
 	if (scene) {
-		if (scene->get_filename()!="") {
-			previous_scenes.push_back(scene->get_filename());
+		if (current_path!="") {
+			previous_scenes.push_back(current_path);
 		}
 
 		memdelete(scene);
@@ -1578,7 +1573,7 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 			//file->set_current_path(current_path);
 			Node *scene = edited_scene;
 			if (scene) {
-				file->set_current_path(scene->get_filename());
+				file->set_current_path(current_path);
 			};
 			file->set_title("Open Scene");
 			file->popup_centered_ratio();
@@ -1613,9 +1608,9 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 
 
 			Node *scene = edited_scene;
-			if (scene && scene->get_filename()!="") {
+			if (scene && current_path!="") {
 
-				_save_scene(scene->get_filename());
+				_save_scene(current_path);
 				return;
 			};
 			// fallthrough to save_as
@@ -1648,12 +1643,12 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 			}
 			
 			//file->set_current_path(current_path);
-			if (scene->get_filename()!="") {
-				file->set_current_path(scene->get_filename());
+			if (current_path!="") {
+				file->set_current_path(current_path);
 				if (extensions.size()) {
-					String ext=scene->get_filename().extension().to_lower();
+					String ext=current_path.extension().to_lower();
 					if (extensions.find(ext)==NULL) {
-						file->set_current_path(scene->get_filename().replacen("."+ext,"."+extensions.front()->get()));
+						file->set_current_path(current_path.replacen("."+ext,"."+extensions.front()->get()));
 					}
 				}
 			} else {
@@ -1697,8 +1692,8 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 			}
 
 			String cpath;
-			if (scene->get_filename()!="") {
-				cpath = scene->get_filename();
+			if (current_path!="") {
+				cpath = current_path;
 
 				String fn = cpath.substr(0,cpath.length() - cpath.extension().size());
 				String ext=cpath.extension();
@@ -1755,7 +1750,7 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 
 			Node *tocopy = selection.front()->get();
 
-			if (tocopy!=edited_scene && tocopy->get_filename()!="") {
+			if (tocopy->is_instance()) {
 
 
 				current_option=-1;
@@ -2464,7 +2459,7 @@ Error EditorNode::save_translatable_strings(const String& p_to_file) {
 	f->store_line("# Created By.");
 	f->store_line("# \t"VERSION_FULL_NAME" (c) 2008-2014 Juan Linietsky, Ariel Manzur.");
 	f->store_line("# From Scene: ");
-	f->store_line("# \t"+get_edited_scene()->get_filename());
+	f->store_line("# \t"+current_path);
 	f->store_line("");
 	f->store_line("msgid \"\"");
 	f->store_line("msgstr \"\"");
@@ -2699,6 +2694,7 @@ Error EditorNode::load_scene(const String& p_scene) {
 	}
 */
 	set_edited_scene(new_scene);
+    current_path = lpath;
 	_get_scene_metadata();
 	scene_tree_dock->set_selected(new_scene, true);
 	property_editor->edit(new_scene);
@@ -3023,7 +3019,7 @@ void EditorNode::_load_error_notify(void* p_ud,const String& p_text) {
 
 bool EditorNode::_find_scene_in_use(Node* p_node,const String& p_path) const {
 
-	if (p_node->get_filename()==p_path) {
+	if (p_node->get_instance_path()==p_path) {
 		return true;
 	}
 
@@ -3040,6 +3036,8 @@ bool EditorNode::_find_scene_in_use(Node* p_node,const String& p_path) const {
 
 bool EditorNode::is_scene_in_use(const String& p_path) {
 
+    if (p_path == current_path)
+        return true;
 	Node *es = get_edited_scene();
 	if (es)
 		return _find_scene_in_use(es,p_path);
@@ -4123,6 +4121,7 @@ EditorNode::EditorNode() {
 
 
 	edited_scene=NULL;
+    current_path=String();
 	saved_version=0;
 	unsaved_cache=true;
 	_last_instanced_scene=NULL;

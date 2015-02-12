@@ -71,7 +71,7 @@ void SceneTreeEditor::_subscene_option(int p_idx) {
 		} break;
 		case SCENE_MENU_OPEN: {
 
-			emit_signal("open",node->get_filename());
+			emit_signal("open",node->get_instance_path());
 		} break;
 
 	}
@@ -221,10 +221,10 @@ void SceneTreeEditor::_add_nodes(Node *p_node,TreeItem *p_parent) {
 		}
 	}
 
-	if (p_node!=get_scene_node() && p_node->get_filename()!="" && can_open_instance) {
+	if (p_node->is_instance() && can_open_instance) {
 
 		item->add_button(0,get_icon("InstanceOptions","EditorIcons"),BUTTON_SUBSCENE);
-		item->set_tooltip(0,"Instance: "+p_node->get_filename()+"\nType: "+p_node->get_type());
+		item->set_tooltip(0,"Instance: "+p_node->get_instance_path()+"\nType: "+p_node->get_type());
 	} else {
 		item->set_tooltip(0,String(p_node->get_name())+"\nType: "+p_node->get_type());
 	}
